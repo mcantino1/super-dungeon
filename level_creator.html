@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level Creator</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; transition: background 0.3s; color: #333; }
+        body.dark { background: #1a1a1a; color: #eee; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; transition: background 0.3s, color 0.3s; }
+        body.dark .container { background: #2a2a2a; color: #eee; }
+        h1 { color: #333; margin: 0 0 20px 0; display: flex; justify-content: space-between; align-items: center; font-size: 28px; }
+        body.dark h1 { color: #eee; }
+        .dark-mode-toggle { padding: 8px 16px; background: #333; color: #fff; border: 2px solid #666; cursor: pointer; border-radius: 4px; font-size: 12px; transition: background 0.2s, border-color 0.2s; }
+        .dark-mode-toggle:hover { background: #555; border-color: #888; }
+        .dark-mode-toggle:focus { outline: 3px solid #4A90E2; outline-offset: 2px; }
+        .top-section { margin: 0 0 20px 0; padding: 15px; border: 1px solid #999; border-radius: 4px; transition: background 0.3s, border-color 0.3s; }
+        body.dark .top-section { background: #333; border-color: #555; }
+        .row { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
+        input { padding: 8px; font-size: 14px; border: 2px solid #999; border-radius: 4px; transition: background 0.3s, color 0.3s, border-color 0.2s; }
+        input:focus { outline: 3px solid #4A90E2; outline-offset: 2px; border-color: #4A90E2; }
+        body.dark input { background: #444; color: #eee; border-color: #666; }
+        button { padding: 10px 20px; background: #4CAF50; color: white; border: 2px solid #2d7a2d; cursor: pointer; border-radius: 4px; font-size: 14px; transition: background 0.2s; font-weight: 500; }
+        button:hover { background: #45a049; }
+        button:focus { outline: 3px solid #4A90E2; outline-offset: 2px; }
+        button:active { transform: scale(0.98); }
+        .item-btn { padding: 8px 12px !important; margin: 3px; background: #d3d3d3 !important; color: #000 !important; border: 2px solid #999 !important; font-weight: 500; }
+        .item-btn:focus { outline: 3px solid #4A90E2 !important; outline-offset: 2px; }
+        body.dark .item-btn { background: #555 !important; color: #eee !important; border-color: #666 !important; }
+        .item-btn.active, .item-btn[aria-pressed="true"] { background: #2196F3 !important; color: white !important; border-color: #0d47a1 !important; }
+        #grid { display: inline-grid; gap: 3px; padding: 15px; background: white; border: 2px solid #333; border-radius: 4px; transition: background 0.3s; }
+        body.dark #grid { background: #333; border-color: #666; }
+        .cell { width: 50px; height: 50px; border: 1px solid #666; display: flex; align-items: center; justify-content: center; cursor: pointer; background: white; font-weight: bold; transition: background 0.2s; }
+        body.dark .cell { background: #444; border-color: #666; color: #eee; }
+        .cell.player { color: #231f20; }
+        body.dark .cell.player { color: #fff; }
+        .cell:hover { background: #e8e8e8; }
+        body.dark .cell:hover { background: #555; }
+        .cell:focus { outline: 3px solid #4A90E2; outline-offset: 2px; background: #e0f7ff; }
+        body.dark .cell:focus { background: #1a4d66; }
+        .cell.selected { background: #ffcccc; border: 3px solid #c41e3a; color: #000; }
+        body.dark .cell.selected { background: #ff6666; color: #000; }
+        #gridAnnouncer { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+        .grid-section { text-align: center; margin: 20px 0; }
+        .grid-section h2 { margin-top: 0; font-size: 20px; }
+        #output { width: 100%; height: 300px; padding: 10px; border: 2px solid #999; font-family: monospace; font-size: 11px; border-radius: 4px; transition: background 0.3s, color 0.3s, border-color 0.3s; }
+        #output:focus { outline: 3px solid #4A90E2; outline-offset: 2px; border-color: #4A90E2; }
+        body.dark #output { background: #333; color: #eee; border-color: #666; }
+        .gen-btn { background: #ff9800 !important; border-color: #cc6600 !important; }
+        .gen-btn:hover { background: #e68900 !important; }
+        label { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+        body.dark label { color: #eee; }
+        .item-label { font-weight: 600; font-size: 15px; }
+        .sr-only { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+        @media (prefers-reduced-motion: reduce) {
+            * { transition: none !important; }
+        }
+        .monster-list { max-height:140px; overflow:auto; border:1px solid #eee; padding:6px; background:#fafafa; color:#222; border-radius:4px; }
+        body.dark .monster-list { background:#2a2a2a; border-color:#555; color:#eee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Level Creator <span style="display:inline-flex; gap:8px; align-items:center;">
+            <input type="file" id="importFile" accept=".html,.htm" style="display:none" />
+            <button id="btnImportHTML" title="Import level HTML" style="padding:6px 8px; font-size:12px; border-radius:6px;">Import Level</button>
+            <input type="file" id="importMonstersFile" accept="text/csv" style="display:none" />
+            <button id="btnImportMonsters" title="Import monsters from CSV" style="padding:6px 8px; font-size:12px; border-radius:6px;">Import Monster</button>
+            <button id="btnExportMonsters" title="Export monsters to CSV" style="padding:6px 8px; font-size:12px; border-radius:6px;">Export Monster</button>
+            <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode. Currently off.">Dark Mode: Off</button>
+        </span></h1>
+
+        <nav class="top-section" aria-label="Level creation controls">
+            <div class="row">
+                <label for="inputOpeningDesc">Opening description:</label>
+                <input type="text" id="inputOpeningDesc" placeholder="Description for starting cell (A1)" style="flex: 1; max-width: 400px;" aria-describedby="descHelp">
+                <button id="btnSetOpeningDesc" aria-label="Set the opening description for the level">Set Opening</button>
+            </div>
+
+            <div class="row">
+                <label for="inputRows">Rows:</label>
+                <input type="number" id="inputRows" min="1" max="12" value="6" aria-describedby="rowsHelp">
+                <label for="inputCols">Cols:</label>
+                <input type="number" id="inputCols" min="1" max="12" value="6" aria-describedby="colsHelp">
+                <button id="btnCreateGrid" aria-label="Create a new grid with the specified number of rows and columns">Create Grid</button>
+            </div>
+
+            <div class="row" id="monsterLibraryContainer" style="margin-top:8px; border-top:1px dashed #ccc; padding-top:8px;">
+                <div style="flex:1; min-width:260px;">
+                    <div style="font-weight:600; margin-bottom:6px;">Monster Library</div>
+                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+                        <label for="monsterName" style="display:flex;flex-direction:column;align-items:flex-start;font-size:12px;flex:1;">
+                            <span style="font-size:11px;color:#666;">New Monster</span>
+                            <input id="monsterName" placeholder="Name" aria-label="Monster name" style="width:100%;box-sizing:border-box;" />
+                        </label>
+                        <label for="monsterHP" style="display:flex;flex-direction:column;align-items:flex-start;font-size:12px;">
+                            <span style="font-size:11px;color:#666;">HP</span>
+                            <input id="monsterHP" type="number" min="1" value="6" aria-label="Monster HP" style="width:90px;" />
+                        </label>
+                        <label for="monsterATK" style="display:flex;flex-direction:column;align-items:flex-start;font-size:12px;">
+                            <span style="font-size:11px;color:#666;">ATK</span>
+                            <input id="monsterATK" type="number" min="0" value="2" aria-label="Monster Attack" style="width:90px;" />
+                        </label>
+                        <label for="monsterDEF" style="display:flex;flex-direction:column;align-items:flex-start;font-size:12px;">
+                            <span style="font-size:11px;color:#666;">DEF</span>
+                            <input id="monsterDEF" type="number" min="0" value="0" aria-label="Monster Defense" style="width:90px;" />
+                        </label>
+                        <button id="btnAddMonster">Add Monster</button>
+                        <button id="btnCancelEdit" style="display:none; margin-left:6px;">Cancel</button>
+                    </div>
+                    <div style="display:flex; gap:8px; margin-top:6px;">
+                        <input id="monsterDesc1" placeholder="Description 1 (attacked)" aria-label="Monster description 1" style="flex:1;" />
+                        <input id="monsterDesc2" placeholder="Description 2 (attacked)" aria-label="Monster description 2" style="flex:1;" />
+                        <input id="monsterDesc3" placeholder="Description 3 (attacked)" aria-label="Monster description 3" style="flex:1;" />
+                    </div>
+                    <div id="monsterList" class="monster-list"></div>
+                </div>
+            </div>
+            <div class="row">
+                <span class="item-label" id="itemTypeLabel">Item Type:</span>
+                <button class="item-btn active" data-item="empty" aria-label="Place empty cells on the grid" aria-pressed="true">Empty</button>
+                <button class="item-btn" data-item="eraser" aria-label="Remove items from the grid">Eraser (E)</button>
+                <button class="item-btn" data-item="wall" aria-label="Place walls on the grid">Wall (W)</button>
+                <button class="item-btn" data-item="custom_wall" aria-label="Place a custom wall on the grid">Custom Wall (C)</button>
+                <button class="item-btn" data-item="monster" aria-label="Place monsters on the grid">Monster (M)</button>
+                <button class="item-btn" data-item="treasure" aria-label="Place treasures on the grid">Treasure (T)</button>
+                <button class="item-btn" data-item="key" aria-label="Place keys on the grid">Key (K)</button>
+                <button class="item-btn" data-item="door" aria-label="Place doors on the grid">Door (D)</button>
+                <button class="item-btn" data-item="exit" aria-label="Place exit door on the grid">Exit (X)</button>
+                <button class="item-btn" data-item="potion" aria-label="Place potions on the grid">Potion (P)</button>
+                <button class="item-btn" data-item="void" aria-label="Place voids on the grid">Void (V)</button>
+                <button class="item-btn" data-item="weapon_shop" aria-label="Place weapon shop on the grid">Weapon Shop (S)</button>
+                <button class="item-btn" data-item="armor_shop" aria-label="Place armor shop on the grid">Armor Shop (A)</button>
+                <button class="item-btn" data-item="inn" aria-label="Place inn on the grid">Inn (N)</button>
+                <button class="item-btn" data-item="villager" aria-label="Place villager on the grid">Villager (L)</button>
+            </div>
+
+            <div class="row" id="treasureConfig" style="display:none; align-items:center;">
+                <label for="treasureKind">Treasure type:</label>
+                <select id="treasureKind" aria-label="Treasure kind">
+                    <option value="gold">Gold</option>
+                    <option value="power">Power</option>
+                    <option value="defense">Defense</option>
+                </select>
+                <label for="treasureValue">Value:</label>
+                <input id="treasureValue" type="number" min="1" value="25" style="width:90px;" aria-label="Treasure value" />
+                <span style="font-size:12px;color:#666;">Set the amount of gold or the buff amount.</span>
+            </div>
+
+            <div class="row" id="potionConfig" style="display:none; align-items:center;">
+                <label for="potionHeal">Potion heal:</label>
+                <input id="potionHeal" type="number" min="1" value="10" style="width:90px;" aria-label="Potion heal amount" />
+                <span style="font-size:12px;color:#666;">Amount of life restored when drinking this potion.</span>
+            </div>
+
+            <div class="row" id="villagerConfig" style="display:none; align-items:center; gap:8px;">
+                <label for="villagerText">Villager text:</label>
+                <input id="villagerText" type="text" placeholder="Villager says..." style="flex:1; max-width:400px;" aria-label="Villager spoken text" />
+                <label for="villagerKind">Reward type:</label>
+                <select id="villagerKind" aria-label="Villager reward kind">
+                    <option value="gold">Gold</option>
+                    <option value="power">Strength</option>
+                    <option value="defense">Defense</option>
+                </select>
+                <label for="villagerValue">Value:</label>
+                <input id="villagerValue" type="number" min="1" value="25" style="width:90px;" aria-label="Villager reward value" />
+                <span style="font-size:12px;color:#666;">Villager spoken text and an optional reward amount.</span>
+            </div>
+
+            <div class="row" id="customWallConfig" style="display:none; align-items:center; gap:8px;">
+                <label for="customWallName">Custom wall name:</label>
+                <input id="customWallName" type="text" placeholder="e.g. Stone Hedge" style="flex:1; max-width:300px;" aria-label="Custom wall display name" />
+                <span style="font-size:12px;color:#666;">Optional name shown in the editor and exports.</span>
+            </div>
+
+            <div class="row">
+                <label for="inputDesc">Cell description:</label>
+                <input type="text" id="inputDesc" placeholder="Enter description for selected cell" style="flex: 1; max-width: 400px;" aria-describedby="descHelp">
+                <button id="btnSetDesc" aria-label="Set the description for the currently selected grid cell">Set Description</button>
+            </div>
+        </nav>
+
+        <!-- Help text for form fields (hidden but available to screen readers) -->
+        <div class="sr-only">
+            <div id="rowsHelp">Enter a number between 1 and 12 for the number of grid rows.</div>
+            <div id="colsHelp">Enter a number between 1 and 12 for the number of grid columns.</div>
+            <div id="descHelp">Optional. Enter a text description or hint for the currently selected grid cell. This description will be shown to the player when they visit that cell.</div>
+        </div>
+
+        <div class="grid-section">
+            <p class="sr-only" id="gridInstructions">Use arrow keys to navigate the grid. Press Enter to place the currently selected item type on the focused cell.</p>
+            <div id="grid" role="grid" aria-label="Interactive game grid for placing items. Click cells to select and place items." aria-describedby="gridHelp"></div>
+            <div id="gridHelp" class="sr-only">Click on a cell to select it. The currently selected cell will be highlighted. With an item type selected, clicking a cell will place that item on the grid.</div>
+            <div id="gridAnnouncer" aria-live="polite" aria-atomic="true">Ready to place items. Select an item type above, then use arrow keys to navigate the grid and Enter to place items.</div>
+        </div>
+
+        <div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:center; margin-bottom:10px;">
+                <button id="btnGenerate" class="gen-btn" style="flex:0 1 32%; min-width:140px; padding:8px 10px; font-size:13px;" aria-label="Generate the HTML file for your custom level. The result will appear in the text area below.">Generate HTML</button>
+                <button id="btnGenerateSVG" class="gen-btn" style="flex:0 1 32%; min-width:140px; padding:8px 10px; font-size:13px;" aria-label="Generate an SVG map file of your level. The file will be downloaded to your computer.">Download SVG Map</button>
+                <button id="btnGenerateWallsSVG" class="gen-btn" style="flex:0 1 32%; min-width:140px; padding:8px 10px; font-size:13px;" aria-label="Generate an SVG map file showing only walls. The file will be downloaded to your computer.">Download Wall Only Map</button>
+            </div>
+            
+            <label for="output" style="display: block; margin-bottom: 8px; font-weight: 600;">Generated HTML Code:</label>
+            <textarea id="output" readonly aria-label="Generated HTML code for your custom level. Copy this text and save it as an HTML file to create a new playable level."></textarea>
+        </div>
+    </div>
+
+    <script>
+        var rows = 6;
+        var cols = 6;
+        var items = [];
+        var scenes = {};
+        var selectedPos = null;
+        var currentItem = 'empty';
+        // Treasure configuration
+        var treasureKind = 'gold';
+        var treasureValue = 25;
+        // Potion configuration
+        var potionHeal = 3;
+        // Villager configuration (custom spoken text + optional reward)
+        var villagerText = '';
+        var villagerKind = 'gold';
+        var villagerValue = 10;
+        // Custom wall display name (editable in UI)
+        var customWallName = '';
+        // Monster library (persisted to localStorage)
+        var monsterLibrary = [];
+        var selectedMonsterIndex = -1;
+        var editingMonsterIndex = -1; // -1 = adding, >=0 = editing
+
+        function loadMonsterLibrary() {
+            try {
+                var raw = localStorage.getItem('monsterLibrary');
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) monsterLibrary = parsed;
+                }
+                var sel = localStorage.getItem('selectedMonsterIndex');
+                if (sel !== null) selectedMonsterIndex = parseInt(sel, 10);
+            } catch (e) {
+                console.warn('Failed to load monster library from storage', e);
+            }
+        }
+
+        function saveMonsterLibrary() {
+            try {
+                localStorage.setItem('monsterLibrary', JSON.stringify(monsterLibrary || []));
+                localStorage.setItem('selectedMonsterIndex', String(selectedMonsterIndex));
+            } catch (e) {
+                console.warn('Failed to save monster library to storage', e);
+            }
+        }
+
+        var symbols = {
+            empty: '',
+            wall: 'W',
+            monster: 'M',
+            treasure: 'T',
+            key: 'K',
+            door: 'D',
+            exit: 'X',
+            potion: 'P',
+            void: 'V',
+            weapon_shop: 'B',
+            armor_shop: 'A',
+            inn: 'N',
+            villager: 'L',
+            custom_wall: 'C'
+        };
+
+        // SVG icons for each item type
+        var itemIcons = {
+            wall: '<svg viewBox="0 0 88.19 88.19" style="width: 100%; height: 100%; display: block;"><rect x="1" y="1" width="86.19" height="86.19" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><line x1="1" y1="65.64" x2="87.19" y2="65.64" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><line x1="1" y1="44.09" x2="87.19" y2="44.09" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><line x1="1" y1="22.55" x2="87.19" y2="22.55" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><line x1="33.93" y1="1" x2="33.93" y2="22.55" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><line x1="64.74" y1="1" x2="64.74" y2="22.55" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><line x1="12.59" y1="22.55" x2="12.59" y2="44.09" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><line x1="44.69" y1="22.55" x2="44.69" y2="44.09" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><line x1="79.26" y1="22.55" x2="79.26" y2="44.09" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><line x1="19.41" y1="44.09" x2="19.41" y2="65.64" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><line x1="53.48" y1="44.09" x2="53.48" y2="65.64" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><line x1="71.85" y1="65.64" x2="71.85" y2="87.19" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><line x1="30.07" y1="65.64" x2="30.07" y2="87.19" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><path d="M21.73,23.25c.57,2.12,3.27,3.14,3.81,5.27.37,1.46-.38,3.19.48,4.43.32.46.81.76,1.25,1.11,1.38,1.07,2.38,2.64,2.75,4.35" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><path d="M70.94,51.36c.69-2.36,2.19-4.47,4.18-5.9.55.04.73.08,1.27.13.44.04.88.07,1.31-.03s.84-.36,1.01-.76" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><path d="M47.63,87.2c-.55-2.12-1.3-4.18-2.24-6.16" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><path d="M73.03,1.7c.92,2.16,2.6,4.86,3.51,7.02" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><path d="M12.4,1.37c.52,2.3-.47,5.69-2.26,7.23" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/><path d="M10.89,5.91l3.37,2.03c.17.69.68,1.3,1.33,1.59" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="2"/></svg>',
+                        monster: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88.2 88.2" style="width: 100%; height: 100%; display: block;" aria-hidden="true" focusable="false">' +
+                                            '<g stroke="currentColor" stroke-miterlimit="10" stroke-width="4" fill="none">' +
+                                                '<path d="M77.9,37.4c0,11.5-5.7,21.7-14.5,27.8v18.2H24.8v-18.2c-8.8-6.1-14.5-16.3-14.5-27.8C10.3,18.7,25.4,3.6,44.1,3.6s33.8,15.1,33.8,33.8Z"/>' +
+                                                '<polyline points="63.4 72.9 63.4 83.4 24.8 83.4 24.8 72.9"/>' +
+                                                '<line x1="53.8" y1="72.9" x2="53.8" y2="83.4"/>' +
+                                                '<line x1="44.1" y1="72.9" x2="44.1" y2="83.4"/>' +
+                                                '<line x1="34.4" y1="72.9" x2="34.4" y2="83.4"/>' +
+                                            '</g>' +
+                                            '<g fill="currentColor" stroke="currentColor" stroke-miterlimit="10" stroke-width="4">' +
+                                                '<path d="M25.9,31.9c0-2.4,2.1-5.3,4.3-4.3s3.1,2.2,4.3,4.3-1.9,4.3-4.3,4.3-4.3-1.9-4.3-4.3Z"/>' +
+                                                '<path d="M62.3,31.9c0-2.4-2.1-5.3-4.3-4.3s-3.1,2.2-4.3,4.3,1.9,4.3,4.3,4.3,4.3-1.9,4.3-4.3Z"/>' +
+                                                '<path d="M42.7,43.5l-1.5,2.6c-.6,1.1.2,2.5,1.4,2.5h3c1.3,0,2-1.4,1.4-2.5l-1.5-2.6c-.6-1.1-2.2-1.1-2.8,0Z"/>' +
+                                            '</g>' +
+                                        '</svg>',
+                        treasure: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88.2 88.2" style="width: 100%; height: 100%; display: block;" aria-hidden="true" focusable="false">' +
+
+                                            '<path d="M52,34.7c-.5.9-1.3,1.3-2.3,2.1l4.1,11.4h-19.6,0c0,0,4.1-11.4,4.1-11.4-.7-.6-1.3-1.3-1.8-2.1H3.5v46.1h81.2v-46.1h-32.7Z"' +
+                                                ' fill="currentColor" stroke="currentColor" stroke-width="2" stroke-miterlimit="10"/>' +
+
+                                            '<path d="M44,21.3c4.9,0,8.8,3.9,8.8,8.8s0,1.6-.1,2.2h31.9v-9.9c0-8.3-6.7-15-15-15H18.5c-8.3,0-15,6.7-15,15v9.9h32c-.2-.7-.3-1.4-.3-2.2,0-4.9,3.9-8.8,8.8-8.8Z"' +
+                                                ' fill="currentColor" stroke="currentColor" stroke-width="2" stroke-miterlimit="10"/>' +
+
+                                        '</svg>',
+                        door: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88.2 88.2" style="width: 100%; height: 100%; display: block;" aria-hidden="true" focusable="false">' +
+                                     '<g fill="none" stroke="currentColor" stroke-width="4" stroke-miterlimit="10">' +
+                                         '<rect x="15.8" y="3.2" width="56.7" height="81.8"/>' +
+                                         '<circle cx="62.1" cy="46.9" r="4.6"/>' +
+                                     '</g>' +
+                                 '</svg>',
+                        exit: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88.2 88.2" style="width: 100%; height: 100%; display: block;" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="4" stroke-miterlimit="10"><rect x="15.8" y="3.2" width="56.7" height="81.8"/><path d="M30 44 L58 44" stroke-width="6" stroke-linecap="round"/></g></svg>',
+                        key: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88.2 88.2" style="width: 100%; height: 100%; display: block;" aria-hidden="true" focusable="false">' +
+                                     '<path d="M31,15.9c-.7,3.4-2.7,7.4-5.6,10.9-6.1,7.4-13.2,9.5-15.4,7.7-2.2-1.8-1.5-9.2,4.7-16.6,6.1-7.4,13.2-9.5,15.4-7.7,1.1.9,1.4,3,.9,5.7Z" fill="none"/>' +
+                                     '<path d="M85,69.1L34,26.9c2-3.2,3.3-6.5,3.9-9.7,1-5.4-.1-9.8-3.3-12.4-1.9-1.5-4.1-2.3-6.7-2.3-5.8,0-12.8,3.9-18.6,10.9C1.1,23.4-.5,34.8,5.6,39.9c1.9,1.5,4.1,2.3,6.7,2.3,4.6,0,10-2.5,14.9-7l38.6,31.9-6.1,7.4c-.5.6-.4,1.4.2,1.9l1.7,1.4c.6.5,1.4.4,1.9-.2l6.1-7.4,6.6,5.5-6.1,7.4c-.4.5-.4,1.3.2,1.8l1.3,1.1c.5.4,1.3.4,1.8-.2l11.9-14.4c.6-.7.5-1.7-.2-2.2ZM14.7,17.9c6.1-7.4,13.2-9.5,15.4-7.7,1.1.9,1.4,3,.9,5.7-.7,3.4-2.7,7.4-5.6,10.9-6.1,7.4-13.2,9.5-15.4,7.7-2.2-1.8-1.5-9.2,4.7-16.6Z"' +
+                                     ' fill="currentColor" stroke="currentColor" stroke-width="2" stroke-miterlimit="10"/>' +
+                                 '</svg>',
+                        potion: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88.2 88.2" style="width: 100%; height: 100%; display: block;" aria-hidden="true" focusable="false">' +
+                                         '<path d="M68.2,65c0,10.8-10.8,19.5-24.1,19.5s-24.1-8.7-24.1-19.5c0-8.7,7-16.1,16.7-18.6V5.7h14.8v40.8c9.7,2.5,16.7,9.9,16.7,18.6Z"' +
+                                             ' fill="currentColor" stroke="currentColor" stroke-width="2" stroke-miterlimit="10"/>' +
+                                         '<path d="M44.1,5.7c-5.1,0-9.2-.5-9.2-1s4.1-1,9.2-1,9.2.5,9.2,1-4.1,1-9.2,1Z"' +
+                                             ' fill="none" stroke="currentColor" stroke-width="2" stroke-miterlimit="10"/>' +
+                                     '</svg>',
+                        weapon_shop: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88.2 88.2" style="width:100%;height:100%;display:block;" aria-hidden="true" focusable="false">' +
+                                                        '<g stroke="currentColor" stroke-miterlimit="10" stroke-width="4" fill="none">' +
+                                                            '<path d="M20 68 L68 20"/>' +
+                                                            '<path d="M54 14 L70 30 L56 44"/>' +
+                                                        '</g>' +
+                                                    '</svg>',
+                        armor_shop: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88.2 88.2" style="width:100%;height:100%;display:block;" aria-hidden="true" focusable="false">' +
+                                                        '<g fill="none" stroke="currentColor" stroke-width="4" stroke-miterlimit="10">' +
+                                                            '<path d="M44 6 L20 18 L20 42 C20 62 44 74 44 74 C44 74 68 62 68 42 L68 18 Z"/>' +
+                                                        '</g>' +
+                                                    '</svg>',
+                        inn: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88.2 88.2" style="width:100%;height:100%;display:block;" aria-hidden="true" focusable="false">' +
+                                                        '<g stroke="currentColor" stroke-miterlimit="10" stroke-width="6" fill="none">' +
+                                                            '<line x1="44.1" y1="20" x2="44.1" y2="68.2" />' +
+                                                            '<line x1="20" y1="44.1" x2="68.2" y2="44.1" />' +
+                                                        '</g>' +
+                                                    '</svg>',
+                        villager: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88.2 88.2" style="width:100%;height:100%;display:block;" aria-hidden="true" focusable="false">' +
+                                                '<g stroke="currentColor" stroke-miterlimit="10" stroke-width="3" fill="currentColor">' +
+                                                    '<circle cx="44" cy="28" r="10"/>' +
+                                                    '<path d="M24 66 C24 54 64 54 64 66 C64 74 44 80 44 80 C44 80 24 74 24 66 Z"/>' +
+                                                '</g>' +
+                                            '</svg>',
+                        void: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88.2 88.2" style="width: 100%; height: 100%; display: block;" aria-hidden="true" focusable="false">' +
+                                    '<circle cx="44.1" cy="44.1" r="30" fill="none" stroke="currentColor" stroke-width="4" />' +
+                                    '<circle cx="44.1" cy="44.1" r="12" fill="none" stroke="currentColor" stroke-width="4" />' +
+                                '</svg>'
+        };
+
+        // Alias the regular wall icon for custom walls so creators can reuse the same art
+        itemIcons.custom_wall = itemIcons.wall;
+
+        function makeGrid() {
+            var grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = 'repeat(' + cols + ', 50px)';
+
+            for (var r = 0; r < rows; r++) {
+                for (var c = 0; c < cols; c++) {
+                    var pos = String.fromCharCode(65 + c) + (r + 1);
+                    var cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = 'cell_' + pos;
+                    cell.dataset.pos = pos;
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.textContent = '';
+                    cell.style.cursor = 'pointer';
+                    cell.tabIndex = -1;
+                    cell.setAttribute('role', 'button');
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function refreshCells() {
+            var allCells = document.querySelectorAll('.cell');
+            for (var i = 0; i < allCells.length; i++) {
+                var cell = allCells[i];
+                var pos = cell.dataset.pos;
+                var found = null;
+                for (var j = 0; j < items.length; j++) {
+                    if (items[j].pos === pos) {
+                        found = items[j];
+                        break;
+                    }
+                }
+                cell.innerHTML = '';
+                if (found) {
+                    if (itemIcons[found.type]) {
+                        // Display SVG icon
+                        cell.innerHTML = itemIcons[found.type];
+                        // If treasure has meta, expose it via aria-label
+                                if (found.type === 'treasure' && found.meta) {
+                                    var label = 'Treasure: ' + found.meta.kind + ' ' + found.meta.value;
+                                    cell.setAttribute('aria-label', label);
+                                    cell.title = label;
+                                } else if (found.type === 'potion' && found.meta) {
+                                    var label = 'Potion: restores ' + (found.meta.heal || potionHeal) + ' life';
+                                    cell.setAttribute('aria-label', label);
+                                    cell.title = label;
+                                } else if (found.type === 'villager' && found.meta) {
+                                    var label = 'Villager: ' + (found.meta.text || '');
+                                    cell.setAttribute('aria-label', label);
+                                    cell.title = label;
+                                } else if (found.type === 'custom_wall') {
+                                    var label = (found.meta && found.meta.name) ? found.meta.name : 'Wall';
+                                    cell.setAttribute('aria-label', label);
+                                    cell.title = label;
+                                } else {
+                                    cell.removeAttribute('aria-label');
+                                    cell.removeAttribute('title');
+                                }
+                    } else {
+                        cell.textContent = symbols[found.type] || '';
+                        cell.removeAttribute('aria-label');
+                        cell.removeAttribute('title');
+                    }
+                } else {
+                    cell.textContent = '';
+                }
+            }
+        }
+
+        function getItemNameForAnnouncement(itemType) {
+            var itemNames = {
+                empty: 'empty',
+                wall: 'wall',
+                monster: 'monster',
+                treasure: 'treasure',
+                key: 'key',
+                door: 'door',
+                potion: 'potion',
+                eraser: 'eraser',
+                void: 'void'
+            };
+            itemNames.villager = 'villager';
+            return itemNames[itemType] || itemType;
+        }
+
+        function announceCell(pos) {
+            var found = null;
+            for (var j = 0; j < items.length; j++) {
+                if (items[j].pos === pos) {
+                    found = items[j];
+                    break;
+                }
+            }
+            var announcement = 'Cell ' + pos;
+            if (found) {
+                announcement += '. Contains: ' + getItemNameForAnnouncement(found.type);
+            } else {
+                announcement += '. Empty';
+            }
+            announcement += '. Selected item type: ' + getItemNameForAnnouncement(currentItem) + '.';
+            document.getElementById('gridAnnouncer').textContent = announcement;
+        }
+
+        function focusCellByPosition(pos) {
+            var cell = document.getElementById('cell_' + pos);
+            if (cell) {
+                cell.tabIndex = 0;
+                cell.focus();
+                announceCell(pos);
+            }
+        }
+
+        function enterGridMode(startPos) {
+            startPos = startPos || 'A1';
+            focusCellByPosition(startPos);
+            document.getElementById('gridAnnouncer').textContent = 'Entered grid mode at cell ' + startPos + '. Use arrow keys to navigate. Press Enter to place ' + getItemNameForAnnouncement(currentItem) + '.';
+        }
+
+        document.getElementById('btnCreateGrid').onclick = function() {
+            rows = parseInt(document.getElementById('inputRows').value);
+            cols = parseInt(document.getElementById('inputCols').value);
+            items = [];
+            scenes = {};
+            selectedPos = null;
+            makeGrid();
+            setupGridKeyboard();
+        };
+
+        var itemButtons = document.querySelectorAll('.item-btn');
+        for (var i = 0; i < itemButtons.length; i++) {
+            itemButtons[i].onclick = function() {
+                for (var j = 0; j < itemButtons.length; j++) {
+                    itemButtons[j].classList.remove('active');
+                    itemButtons[j].setAttribute('aria-pressed', 'false');
+                }
+                this.classList.add('active');
+                this.setAttribute('aria-pressed', 'true');
+                currentItem = this.dataset.item;
+            };
+
+            itemButtons[i].addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    // Activate the button
+                    for (var j = 0; j < itemButtons.length; j++) {
+                        itemButtons[j].classList.remove('active');
+                        itemButtons[j].setAttribute('aria-pressed', 'false');
+                    }
+                    this.classList.add('active');
+                    this.setAttribute('aria-pressed', 'true');
+                    currentItem = this.dataset.item;
+                    // Enter grid mode
+                    enterGridMode('A1');
+                }
+            });
+        }
+
+        // Show/hide treasure config when treasure is selected
+        var treasureConfigEl = document.getElementById('treasureConfig');
+        var treasureKindEl = document.getElementById('treasureKind');
+        var treasureValueEl = document.getElementById('treasureValue');
+
+        function updateTreasureUI() {
+            if (currentItem === 'treasure') {
+                treasureConfigEl.style.display = 'flex';
+            } else {
+                treasureConfigEl.style.display = 'none';
+            }
+            // show/hide potion config
+            if (potionConfigEl) potionConfigEl.style.display = (currentItem === 'potion') ? 'flex' : 'none';
+            // show/hide villager config
+            var villagerConfigEl = document.getElementById('villagerConfig');
+            if (villagerConfigEl) villagerConfigEl.style.display = (currentItem === 'villager') ? 'flex' : 'none';
+            // show/hide custom wall config
+            var customWallConfigEl = document.getElementById('customWallConfig');
+            if (customWallConfigEl) customWallConfigEl.style.display = (currentItem === 'custom_wall') ? 'flex' : 'none';
+            var monsterContainer = document.getElementById('monsterLibraryContainer');
+            if (monsterContainer) {
+                monsterContainer.style.display = (currentItem === 'monster') ? 'flex' : 'none';
+            }
+        }
+
+        // Initialize listeners on the buttons to toggle treasure UI
+        for (var i = 0; i < itemButtons.length; i++) {
+            itemButtons[i].addEventListener('click', function() {
+                currentItem = this.dataset.item;
+                updateTreasureUI();
+            });
+        }
+
+        // Quick key mapping: press the letter shown in the button to switch item types
+        // Ignores input fields and contenteditable areas so typing isn't intercepted.
+        (function(){
+            var keyMap = {
+                'w': 'wall',
+                'c': 'custom_wall',
+                'm': 'monster',
+                't': 'treasure',
+                'k': 'key',
+                'd': 'door',
+                'x': 'exit',
+                    'p': 'potion',
+                    'v': 'void',
+                    's': 'weapon_shop',
+                    'a': 'armor_shop',
+                    'n': 'inn',
+                    'l': 'villager',
+                    'e': 'eraser'
+            };
+
+            function isEditing() {
+                var ae = document.activeElement;
+                if (!ae) return false;
+                var tag = ae.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+                if (ae.isContentEditable) return true;
+                return false;
+            }
+
+            window.addEventListener('keydown', function(e){
+                if (isEditing()) return; // don't intercept typing in fields
+                if (!e.key || e.key.length !== 1) return;
+                var k = e.key.toLowerCase();
+                if (!keyMap[k]) return;
+                var item = keyMap[k];
+                var btn = document.querySelector('.item-btn[data-item="' + item + '"]');
+                if (btn) {
+                    e.preventDefault();
+                    btn.click();
+                    // move focus to the button so keyboard users get feedback
+                    btn.focus();
+                }
+            });
+        })();
+
+        treasureKindEl.addEventListener('change', function() {
+            treasureKind = this.value;
+            // Apply sensible defaults per treasure kind
+            if (treasureKind === 'gold') treasureValue = 25;
+            else if (treasureKind === 'power') treasureValue = 2;
+            else if (treasureKind === 'defense') treasureValue = 1;
+            treasureValueEl.value = treasureValue;
+        });
+        treasureValueEl.addEventListener('change', function() { treasureValue = parseInt(this.value) || 0; });
+        // Potion UI wiring
+        var potionConfigEl = document.getElementById('potionConfig');
+        var potionHealEl = document.getElementById('potionHeal');
+        if (potionHealEl) {
+            potionHealEl.addEventListener('change', function() { potionHeal = parseInt(this.value) || 0; });
+            potionHealEl.value = potionHeal;
+        }
+        // Villager UI wiring
+        var villagerConfigEl = document.getElementById('villagerConfig');
+        var villagerTextEl = document.getElementById('villagerText');
+        var villagerKindEl = document.getElementById('villagerKind');
+        var villagerValueEl = document.getElementById('villagerValue');
+        if (villagerTextEl) {
+            villagerTextEl.addEventListener('change', function() { villagerText = this.value || ''; });
+            villagerTextEl.value = villagerText;
+        }
+        if (villagerKindEl) {
+            villagerKindEl.addEventListener('change', function() {
+                villagerKind = this.value || 'gold';
+                // Apply sensible defaults per villager reward kind
+                if (villagerKind === 'gold') villagerValue = 10;
+                else if (villagerKind === 'power') villagerValue = 1;
+                else if (villagerKind === 'defense') villagerValue = 1;
+                if (villagerValueEl) villagerValueEl.value = villagerValue;
+            });
+            villagerKindEl.value = villagerKind;
+        }
+        if (villagerValueEl) {
+            villagerValueEl.addEventListener('change', function() { villagerValue = parseInt(this.value) || 0; });
+            villagerValueEl.value = villagerValue;
+        }
+        // Sync initial values
+        treasureKindEl.value = treasureKind;
+        treasureValueEl.value = treasureValue;
+        updateTreasureUI();
+
+        // Custom wall UI wiring
+        var customWallNameEl = document.getElementById('customWallName');
+        if (customWallNameEl) {
+            customWallNameEl.addEventListener('change', function() { customWallName = this.value || ''; });
+            customWallNameEl.value = customWallName;
+        }
+
+        // Monster library handling
+        var monsterNameEl = document.getElementById('monsterName');
+        var monsterHPEl = document.getElementById('monsterHP');
+        var monsterATKEl = document.getElementById('monsterATK');
+        var monsterDEFEI = document.getElementById('monsterDEF');
+        var monsterListEl = document.getElementById('monsterList');
+        var btnAddMonster = document.getElementById('btnAddMonster');
+
+        function renderMonsterLibrary(){
+            monsterListEl.innerHTML = '';
+            monsterLibrary.forEach(function(m, idx){
+                var row = document.createElement('div');
+                row.style.display = 'flex'; row.style.alignItems = 'center'; row.style.justifyContent = 'space-between'; row.style.marginBottom = '6px';
+                var left = document.createElement('div');
+                var descCount = (m.descriptions && m.descriptions.length) ? m.descriptions.length : 0;
+                left.textContent = m.name + ' (HP:' + (m.hp||0) + ' ATK:' + (m.atk||0) + ' DEF:' + (m.def||0) + ')' + (descCount>0 ? ' ['+descCount+' desc]' : '');
+                left.style.flex = '1';
+                var choose = document.createElement('button');
+                choose.textContent = (selectedMonsterIndex===idx? 'Selected':'Use');
+                choose.style.marginRight = '6px';
+                choose.onclick = function(){ selectedMonsterIndex = idx; saveMonsterLibrary(); renderMonsterLibrary(); };
+                var edit = document.createElement('button'); edit.textContent = 'Edit'; edit.style.marginRight = '6px';
+                edit.onclick = function(){
+                    editingMonsterIndex = idx;
+                    monsterNameEl.value = m.name || '';
+                    monsterHPEl.value = m.hp || 6;
+                    monsterATKEl.value = m.atk || 2;
+                    monsterDEFEI.value = m.def || 0;
+                    document.getElementById('monsterDesc1').value = (m.descriptions && m.descriptions[0]) || '';
+                    document.getElementById('monsterDesc2').value = (m.descriptions && m.descriptions[1]) || '';
+                    document.getElementById('monsterDesc3').value = (m.descriptions && m.descriptions[2]) || '';
+                    btnAddMonster.textContent = 'Save Monster';
+                    var cancel = document.getElementById('btnCancelEdit'); if(cancel) cancel.style.display='inline-block';
+                };
+                var del = document.createElement('button'); del.textContent = 'Delete'; del.onclick = function(){ if(selectedMonsterIndex===idx) selectedMonsterIndex=-1; if(editingMonsterIndex===idx){ editingMonsterIndex=-1; btnAddMonster.textContent='Add Monster'; var cancel=document.getElementById('btnCancelEdit'); if(cancel) cancel.style.display='none'; } monsterLibrary.splice(idx,1); saveMonsterLibrary(); renderMonsterLibrary(); };
+                row.appendChild(left); row.appendChild(choose); row.appendChild(edit); row.appendChild(del);
+                monsterListEl.appendChild(row);
+            });
+        }
+
+        btnAddMonster.addEventListener('click', function(){
+            var name = monsterNameEl.value.trim() || 'Monster';
+            var hp = parseInt(monsterHPEl.value) || 6;
+            var atk = parseInt(monsterATKEl.value) || 2;
+            var def = parseInt(monsterDEFEI.value) || 0;
+            var d1 = (document.getElementById('monsterDesc1')||{value:''}).value.trim();
+            var d2 = (document.getElementById('monsterDesc2')||{value:''}).value.trim();
+            var d3 = (document.getElementById('monsterDesc3')||{value:''}).value.trim();
+            var descriptions = [];
+            if (d1) descriptions.push(d1);
+            if (d2) descriptions.push(d2);
+            if (d3) descriptions.push(d3);
+            if (editingMonsterIndex >= 0) {
+                // Save edits to existing monster
+                var mm = monsterLibrary[editingMonsterIndex];
+                mm.name = name; mm.hp = hp; mm.atk = atk; mm.def = def; mm.descriptions = descriptions;
+                editingMonsterIndex = -1;
+                btnAddMonster.textContent = 'Add Monster';
+                var cancel = document.getElementById('btnCancelEdit'); if(cancel) cancel.style.display='none';
+            } else {
+                monsterLibrary.push({name:name, hp:hp, atk:atk, def:def, descriptions: descriptions});
+            }
+            monsterNameEl.value = '';
+            document.getElementById('monsterDesc1').value = '';
+            document.getElementById('monsterDesc2').value = '';
+            document.getElementById('monsterDesc3').value = '';
+            saveMonsterLibrary();
+            renderMonsterLibrary();
+        });
+
+        // Load persisted library, or initialize with one default if empty
+        loadMonsterLibrary();
+        if(monsterLibrary.length===0){ monsterLibrary.push({name:'Grunt', hp:6, atk:2, def:0}); saveMonsterLibrary(); }
+        renderMonsterLibrary();
+
+        // Cancel edit button behavior
+        var btnCancelEdit = document.getElementById('btnCancelEdit');
+        if (btnCancelEdit) {
+            btnCancelEdit.addEventListener('click', function(){
+                editingMonsterIndex = -1;
+                btnAddMonster.textContent = 'Add Monster';
+                btnCancelEdit.style.display = 'none';
+                monsterNameEl.value = '';
+                monsterHPEl.value = 6;
+                monsterATKEl.value = 2;
+                monsterDEFEI.value = 0;
+                document.getElementById('monsterDesc1').value = '';
+                document.getElementById('monsterDesc2').value = '';
+                document.getElementById('monsterDesc3').value = '';
+            });
+        }
+
+        // Handle grid keyboard navigation
+        function setupGridKeyboard() {
+            var allCells = document.querySelectorAll('.cell');
+            for (var i = 0; i < allCells.length; i++) {
+                allCells[i].addEventListener('keydown', function(e) {
+                    var pos = this.dataset.pos;
+                    var row = parseInt(this.dataset.row);
+                    var col = parseInt(this.dataset.col);
+                    var newRow = row;
+                    var newCol = col;
+                    var handled = false;
+
+                    if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        newRow = Math.max(0, row - 1);
+                        handled = true;
+                    } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        newRow = Math.min(rows - 1, row + 1);
+                        handled = true;
+                    } else if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        newCol = Math.max(0, col - 1);
+                        handled = true;
+                    } else if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        newCol = Math.min(cols - 1, col + 1);
+                        handled = true;
+                    } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        // Place item on current cell
+                        var existingIdx = -1;
+                        for (var k = 0; k < items.length; k++) {
+                            if (items[k].pos === pos) {
+                                existingIdx = k;
+                                break;
+                            }
+                        }
+
+                        if (currentItem === 'empty' || currentItem === 'eraser') {
+                            if (existingIdx >= 0) {
+                                items.splice(existingIdx, 1);
+                            }
+                        } else if (currentItem === 'treasure') {
+                            var treasureObj = {type: 'treasure', pos: pos, meta: {kind: treasureKind, value: treasureValue}};
+                            if (existingIdx >= 0) {
+                                items[existingIdx] = treasureObj;
+                            } else {
+                                items.push(treasureObj);
+                            }
+                        } else if (currentItem === 'monster') {
+                            var monsterMeta = null;
+                            if (selectedMonsterIndex >= 0 && monsterLibrary[selectedMonsterIndex]) {
+                                var m = monsterLibrary[selectedMonsterIndex];
+                                monsterMeta = {name: m.name, hp: m.hp, atk: m.atk, def: m.def};
+                                if (m.descriptions && m.descriptions.length) monsterMeta.descriptions = m.descriptions.slice();
+                            }
+                            var monsterObj = {type: 'monster', pos: pos};
+                            if (monsterMeta) monsterObj.meta = monsterMeta;
+                            if (existingIdx >= 0) {
+                                items[existingIdx] = monsterObj;
+                            } else {
+                                items.push(monsterObj);
+                            }
+                        } else if (currentItem === 'potion') {
+                            var potionObj = {type: 'potion', pos: pos, meta: {heal: potionHeal}};
+                            if (existingIdx >= 0) {
+                                items[existingIdx] = potionObj;
+                            } else {
+                                items.push(potionObj);
+                            }
+                        } else if (currentItem === 'villager') {
+                            var villagerObj = {type: 'villager', pos: pos, meta: {text: villagerText, kind: villagerKind, value: villagerValue}};
+                            if (existingIdx >= 0) {
+                                items[existingIdx] = villagerObj;
+                            } else {
+                                items.push(villagerObj);
+                            }
+                        } else if (currentItem === 'custom_wall') {
+                            var cwObj = {type: 'custom_wall', pos: pos, meta: {name: customWallName}};
+                            if (existingIdx >= 0) {
+                                items[existingIdx] = cwObj;
+                            } else {
+                                items.push(cwObj);
+                            }
+                        } else {
+                            if (existingIdx >= 0) {
+                                items[existingIdx].type = currentItem;
+                                if (items[existingIdx].meta) delete items[existingIdx].meta;
+                            } else {
+                                items.push({type: currentItem, pos: pos});
+                            }
+                        }
+
+                        refreshCells();
+                        var message = 'Placed ' + getItemNameForAnnouncement(currentItem) + ' on cell ' + pos + '.';
+                        document.getElementById('gridAnnouncer').textContent = message;
+                        return;
+                    }
+
+                    if (handled && (newRow !== row || newCol !== col)) {
+                        var newPos = String.fromCharCode(65 + newCol) + (newRow + 1);
+                        focusCellByPosition(newPos);
+                    }
+                });
+            }
+        }
+
+        document.getElementById('grid').onclick = function(e) {
+            // Support clicks on inner SVG/content by finding the nearest .cell ancestor.
+            var targetCell = (e.target && e.target.closest) ? e.target.closest('.cell') : null;
+            if (!targetCell) return;
+            var cell = targetCell;
+                var allCells = document.querySelectorAll('.cell');
+                for (var i = 0; i < allCells.length; i++) {
+                    allCells[i].classList.remove('selected');
+                }
+                cell.classList.add('selected');
+
+                var pos = cell.dataset.pos;
+                selectedPos = pos;
+                document.getElementById('inputDesc').value = scenes[pos] || '';
+
+                var existingIdx = -1;
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].pos === pos) {
+                        existingIdx = i;
+                        break;
+                    }
+                }
+
+                if (currentItem === 'empty') {
+                    if (existingIdx >= 0) {
+                        items.splice(existingIdx, 1);
+                    }
+                } else if (currentItem === 'treasure') {
+                    var treasureObj = {type: 'treasure', pos: pos, meta: {kind: treasureKind, value: treasureValue}};
+                    if (existingIdx >= 0) {
+                        items[existingIdx] = treasureObj;
+                    } else {
+                        items.push(treasureObj);
+                    }
+                } else if (currentItem === 'monster') {
+                    var monsterMeta = null;
+                    if (selectedMonsterIndex >= 0 && monsterLibrary[selectedMonsterIndex]) {
+                        var m = monsterLibrary[selectedMonsterIndex];
+                        monsterMeta = {name: m.name, hp: m.hp, atk: m.atk, def: m.def};
+                        if (m.descriptions && m.descriptions.length) monsterMeta.descriptions = m.descriptions.slice();
+                    }
+                    var monsterObj = {type: 'monster', pos: pos};
+                    if (monsterMeta) monsterObj.meta = monsterMeta;
+                    if (existingIdx >= 0) {
+                        items[existingIdx] = monsterObj;
+                    } else {
+                        items.push(monsterObj);
+                    }
+                } else if (currentItem === 'potion') {
+                    var potionObj = {type: 'potion', pos: pos, meta: {heal: potionHeal}};
+                    if (existingIdx >= 0) {
+                        items[existingIdx] = potionObj;
+                    } else {
+                        items.push(potionObj);
+                    }
+                } else if (currentItem === 'villager') {
+                    var villagerObj = {type: 'villager', pos: pos, meta: {text: villagerText, kind: villagerKind, value: villagerValue}};
+                    if (existingIdx >= 0) {
+                        items[existingIdx] = villagerObj;
+                    } else {
+                        items.push(villagerObj);
+                    }
+                } else if (currentItem === 'custom_wall') {
+                    var cwObj = {type: 'custom_wall', pos: pos, meta: {name: customWallName}};
+                    if (existingIdx >= 0) {
+                        items[existingIdx] = cwObj;
+                    } else {
+                        items.push(cwObj);
+                    }
+                } else if (currentItem === 'eraser') {
+                    if (existingIdx >= 0) {
+                        items.splice(existingIdx, 1);
+                    }
+                } else {
+                    if (existingIdx >= 0) {
+                        items[existingIdx].type = currentItem;
+                        if (items[existingIdx].meta) delete items[existingIdx].meta;
+                    } else {
+                        items.push({type: currentItem, pos: pos});
+                    }
+                }
+
+                refreshCells();
+            };
+
+        document.getElementById('btnSetDesc').onclick = function() {
+            if (selectedPos) {
+                var desc = document.getElementById('inputDesc').value;
+                if (desc.trim()) {
+                    scenes[selectedPos] = desc;
+                } else {
+                    delete scenes[selectedPos];
+                }
+            }
+        };
+
+        document.getElementById('btnSetOpeningDesc').onclick = function() {
+            var od = document.getElementById('inputOpeningDesc').value;
+            if (od && od.trim()) scenes['A1'] = od.trim(); else delete scenes['A1'];
+            // reflect change in cell description UI if A1 is selected
+            if (selectedPos === 'A1') document.getElementById('inputDesc').value = scenes['A1'] || '';
+            try { localStorage.setItem('creatorOpeningDesc', (scenes['A1'] || '')); } catch (e) { }
+        };
+
+        document.getElementById('btnGenerate').onclick = function() {
+            // Ensure opening description is included from the input when generating
+            try {
+                var opening = (document.getElementById('inputOpeningDesc')||{value:''}).value.trim();
+                if (opening) scenes['A1'] = opening; else delete scenes['A1'];
+                try { localStorage.setItem('creatorOpeningDesc', opening || ''); } catch (e) {}
+            } catch (e) { /* ignore */ }
+            var levelJson = JSON.stringify({
+                id: 'level1',
+                rows: rows,
+                cols: cols,
+                items: items,
+                scenes: scenes,
+                nextLevelId: null
+            });
+
+            var html = '<!doctype html>\n' +
+                '<html lang="en">\n' +
+                '<head>\n' +
+                '<meta charset="utf-8" />\n' +
+                '<meta name="viewport" content="width=device-width,initial-scale=1" />\n' +
+                '<title>Welcome to Super Dungeon - Custom Level</title>\n' +
+                '<link rel="stylesheet" href="style.css">\n' +
+                '</head>\n' +
+                '<body>\n' +
+                '<header>\n' +
+                '  <div>\n' +
+                '    <h1>Welcome to Super Dungeon</h1>\n' +
+                '    <p>\n' +
+                '      Focus the game area, then use <kbd>Arrow Keys</kbd> to move.\n' +
+                '    </p>\n' +
+                '  </div>\n' +
+                '  <button id="darkModeBtn" aria-pressed="false">Dark mode: Off</button>\n' +
+                '</header>\n' +
+                '<main id="game" tabindex="0" role="application" aria-label="Grid adventure game. Use arrow keys to move.">\n' +
+                '  <section class="leftPane" aria-label="Grid panel">\n' +
+                '    <strong>Game Grid</strong>\n' +
+                '    <div class="mapShell" aria-hidden="true">\n' +
+                '      <div id="map"></div>\n' +
+                '    </div>\n' +
+                '  </section>\n' +
+                '  <section class="rightPane" aria-label="Text and stats panel">\n' +
+                '    <div class="panel locationPanel" aria-label="Current location">\n' +
+                '      <div class="row">\n' +
+                '        <strong>Current location</strong>\n' +
+                '        <span id="posText" class="pill">A1</span>\n' +
+                '      </div>\n' +
+                '      <p id="currentText">Use arrow keys to explore.</p>\n' +
+                '      <button id="toggleLogBtn" aria-expanded="false" aria-controls="logArea" style="margin-top:10px;">View exploration log</button>\n' +
+                '      <div id="logArea" hidden>\n' +
+                '        <strong>Discovered locations:</strong>\n' +
+                '        <div id="logList"></div>\n' +
+                '      </div>\n' +
+                '    </div>\n' +
+                '    <div class="panel" aria-label="Character stats and actions">\n' +
+                '      <strong>Character stats</strong>\n' +
+                '      <ul class="statsList" aria-label="Stats list">\n' +
+                '        <li>Life: <strong id="lifeText">10</strong></li>\n' +
+                '        <li>Strength: <strong id="strText">2</strong></li>\n' +
+                '        <li>Defense: <strong id="defText">0</strong></li>\n' +
+                '        <li>Gold: <strong id="goldText">0</strong></li>\n' +
+                '        <li>Key: <strong id="keyText">No</strong></li>\n' +
+                '      </ul>\n' +
+                '      <div class="row" style="margin-top:12px; justify-content:flex-start;">\n' +
+                '        <button id="restartBtn">Restart level</button>\n' +
+                '        <button id="guideBtn">Gameplay guide</button>\n' +
+                '        <button id="continueBtn" hidden>Continue</button>\n' +
+                '      </div>\n' +
+                '    </div>\n' +
+                '    <div id="live" aria-live="polite" class="sr-only"></div>\n' +
+                '  </section>\n' +
+                '</main>\n' +
+                '<dialog id="guideDialog" aria-labelledby="guideTitle">\n' +
+                '  <h2 id="guideTitle" style="margin-top:0;">Gameplay Guide</h2>\n' +
+                '  <p><strong>Goal:</strong> Find the key, then unlock the door to finish the level.</p>\n' +
+                '  <ul>\n' +
+                '    <li><strong>Move:</strong> Use the Arrow Keys to move between grid cells.</li>\n' +
+                '    <li><strong>Fog of war:</strong> You only learn what' + "'" + 's in a cell after you visit it.</li>\n' +
+                '    <li><strong>Walls:</strong> You cannot move into a wall. If you bump a wall, it becomes visible.</li>\n' +
+                '    <li><strong>Auto actions:</strong> Keys, treasure, and potions trigger automatically when you step onto them.</li>\n' +
+                '    <li><strong>Door:</strong> You can only unlock the door if you have the key (step onto the door to unlock).</li>\n' +
+                '  </ul>\n' +
+                '  <div class="dialogActions">\n' +
+                '    <button id="closeGuideBtn">Close guide</button>\n' +
+                '  </div>\n' +
+                '</dialog>\n' +
+                '<script src="script.js"><' + '/script>\n' +
+                '<script>\n' +
+                'LEVELS.level1 = ' + levelJson + ';\n' +
+                'loadLevel("level1");\n' +
+                '<' + '/script>\n' +
+                '</body>\n' +
+                '</html>';
+
+            document.getElementById('output').value = html;
+        };
+
+        document.getElementById('btnGenerateSVG').onclick = function() {
+            // 0.7 inches = 0.7 * 96 pixels (at 96 DPI)
+            var cellSize = 0.7 * 96; // approximately 67.2 pixels
+            var gridWidth = cols * cellSize;
+            var gridHeight = rows * cellSize;
+            var iconSize = cellSize * 0.8; // Icons take up 80% of cell
+
+            // Start SVG
+            var svgContent = '<?xml version="1.0" encoding="UTF-8"?>\n';
+            svgContent += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + gridWidth + ' ' + gridHeight + '" width="' + gridWidth + 'px" height="' + gridHeight + 'px">\n';
+            
+            // White background
+            svgContent += '  <rect width="' + gridWidth + '" height="' + gridHeight + '" fill="white"/>\n';
+
+            // Draw grid
+            svgContent += '  <!-- Grid lines -->\n';
+            for (var r = 0; r <= rows; r++) {
+                var y = r * cellSize;
+                svgContent += '  <line x1="0" y1="' + y + '" x2="' + gridWidth + '" y2="' + y + '" stroke="black" stroke-width="1"/>\n';
+            }
+            for (var c = 0; c <= cols; c++) {
+                var x = c * cellSize;
+                svgContent += '  <line x1="' + x + '" y1="0" x2="' + x + '" y2="' + gridHeight + '" stroke="black" stroke-width="1"/>\n';
+            }
+
+            // Draw items
+            svgContent += '  <!-- Items -->\n';
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var pos = item.pos;
+                var col = pos.charCodeAt(0) - 65;
+                var row = parseInt(pos.substring(1)) - 1;
+                
+                var x = col * cellSize + (cellSize - iconSize) / 2;
+                var y = row * cellSize + (cellSize - iconSize) / 2;
+
+                // Extract SVG content from itemIcons and scale according to its viewBox
+                var iconSvg = itemIcons[item.type];
+                if (iconSvg) {
+                    var svgMatch = iconSvg.match(/<svg([^>]*)>([\s\S]*?)<\/svg>/);
+                    if (svgMatch) {
+                        var svgAttrs = svgMatch[1] || '';
+                        var iconContent = svgMatch[2] || '';
+                        var sourceSize = 24;
+                        var vbMatch = svgAttrs.match(/viewBox="([^"]+)"/i);
+                        if (vbMatch) {
+                            var parts = vbMatch[1].trim().split(/\s+/);
+                            if (parts.length >= 4) {
+                                var w = Number(parts[2]) || 0;
+                                var h = Number(parts[3]) || 0;
+                                sourceSize = Math.max(w || 0, h || 0) || sourceSize;
+                            }
+                        } else if (iconSvg.indexOf('88') !== -1) {
+                            sourceSize = 88.19;
+                        }
+                        var scale = iconSize / sourceSize;
+                        svgContent += '  <g transform="translate(' + x + ', ' + y + ') scale(' + scale + ')">\n';
+                        svgContent += '    ' + iconContent + '\n';
+                        svgContent += '  </g>\n';
+                    }
+                }
+            }
+
+            svgContent += '</svg>';
+
+            // Create blob and download
+            var blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'level_map.svg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        document.getElementById('btnGenerateWallsSVG').onclick = function() {
+            // Export SVG containing only wall items
+            var cellSize = 0.7 * 96;
+            var gridWidth = cols * cellSize;
+            var gridHeight = rows * cellSize;
+            var iconSize = cellSize * 0.8;
+
+            var svgContent = '<?xml version="1.0" encoding="UTF-8"?>\n';
+            svgContent += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + gridWidth + ' ' + gridHeight + '" width="' + gridWidth + 'px" height="' + gridHeight + 'px">\n';
+            svgContent += '  <rect width="' + gridWidth + '" height="' + gridHeight + '" fill="white"/>\n';
+
+            // Grid lines
+            for (var r = 0; r <= rows; r++) {
+                var y = r * cellSize;
+                svgContent += '  <line x1="0" y1="' + y + '" x2="' + gridWidth + '" y2="' + y + '" stroke="black" stroke-width="1"/>\n';
+            }
+            for (var c = 0; c <= cols; c++) {
+                var x = c * cellSize;
+                svgContent += '  <line x1="' + x + '" y1="0" x2="' + x + '" y2="' + gridHeight + '" stroke="black" stroke-width="1"/>\n';
+            }
+
+            // Only draw walls (include custom_wall aliases)
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (item.type !== 'wall' && item.type !== 'custom_wall') continue;
+                var pos = item.pos;
+                var col = pos.charCodeAt(0) - 65;
+                var row = parseInt(pos.substring(1)) - 1;
+                var x = col * cellSize + (cellSize - iconSize) / 2;
+                var y = row * cellSize + (cellSize - iconSize) / 2;
+
+                var iconSvg = itemIcons[item.type];
+                if (iconSvg) {
+                    var svgMatch = iconSvg.match(/<svg([^>]*)>([\s\S]*?)<\/svg>/);
+                    if (svgMatch) {
+                        var svgAttrs = svgMatch[1] || '';
+                        var iconContent = svgMatch[2] || '';
+                        var sourceSize = 24;
+                        var vbMatch = svgAttrs.match(/viewBox="([^"]+)"/i);
+                        if (vbMatch) {
+                            var parts = vbMatch[1].trim().split(/\s+/);
+                            if (parts.length >= 4) {
+                                var w = Number(parts[2]) || 0;
+                                var h = Number(parts[3]) || 0;
+                                sourceSize = Math.max(w || 0, h || 0) || sourceSize;
+                            }
+                        } else if (iconSvg.indexOf('88') !== -1) {
+                            sourceSize = 88.19;
+                        }
+                        var scale = iconSize / sourceSize;
+                        svgContent += '  <g transform="translate(' + x + ', ' + y + ') scale(' + scale + ')">\n';
+                        svgContent += '    ' + iconContent + '\n';
+                        svgContent += '  </g>\n';
+                    }
+                }
+            }
+
+            svgContent += '</svg>';
+
+            var blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'level_map_walls.svg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        makeGrid();
+        setupGridKeyboard();
+
+        // Dark mode toggle
+        var darkModeToggle = document.getElementById('darkModeToggle');
+        darkModeToggle.onclick = function() {
+            document.body.classList.toggle('dark');
+            var isDark = document.body.classList.contains('dark');
+            darkModeToggle.textContent = isDark ? 'Dark Mode: On' : 'Dark Mode: Off';
+            darkModeToggle.setAttribute('aria-label', isDark ? 'Toggle dark mode. Currently on.' : 'Toggle dark mode. Currently off.');
+            localStorage.setItem('creatorDarkMode', isDark ? '1' : '0');
+        };
+
+        // Check for saved dark mode preference
+        if (localStorage.getItem('creatorDarkMode') === '1') {
+            document.body.classList.add('dark');
+            darkModeToggle.textContent = 'Dark Mode: On';
+            darkModeToggle.setAttribute('aria-label', 'Toggle dark mode. Currently on.');
+        }
+
+        // Importer: allow loading a previously generated level HTML into the creator
+        (function(){
+            var importFileEl = document.getElementById('importFile');
+            var importBtn = document.getElementById('btnImportHTML');
+            if(!importFileEl || !importBtn) return;
+
+            function showMessage(msg){
+                // Use alert for now; could be replaced with in-UI notification
+                try { alert(msg); } catch(e){ console.log(msg); }
+            }
+
+            function importLevelFromHtmlText(text){
+                // Look for LEVELS.<id> = { ... } ; and parse the JSON object
+                var m = text.match(/LEVELS\.([a-zA-Z0-9_]+)\s*=\s*(\{[\s\S]*?\})\s*;/m);
+                if(!m){
+                    showMessage('Could not find LEVELS assignment in that file.');
+                    return;
+                }
+                var jsonText = m[2];
+                try {
+                    var parsed = JSON.parse(jsonText);
+                } catch (e) {
+                    showMessage('Failed to parse level JSON: ' + e.message);
+                    return;
+                }
+
+                // Populate editor state with parsed level
+                rows = Number(parsed.rows) || 6;
+                cols = Number(parsed.cols) || 6;
+                items = Array.isArray(parsed.items) ? parsed.items.slice() : [];
+                // Normalize imported items so editor interactions work reliably.
+                // Ensure pos is a trimmed uppercase string (or convert {row,col} objects),
+                // and ensure type is present.
+                for (var ii = items.length - 1; ii >= 0; ii--) {
+                    var it = items[ii];
+                    if (!it || !it.type) { items.splice(ii, 1); continue; }
+                    // Normalize pos formats
+                    if (it.pos && typeof it.pos === 'string') {
+                        it.pos = it.pos.trim().toUpperCase();
+                    } else if (it.pos && typeof it.pos === 'object' && typeof it.pos.row === 'number' && typeof it.pos.col === 'number') {
+                        // convert {row:0,col:0} -> A1
+                        try {
+                            var c = String.fromCharCode(65 + Number(it.pos.col));
+                            var r = Number(it.pos.row) + 1;
+                            it.pos = c + r;
+                        } catch (e) { items.splice(ii, 1); continue; }
+                    } else {
+                        // No valid pos: drop the item
+                        items.splice(ii, 1);
+                        continue;
+                    }
+                }
+                scenes = parsed.scenes || {};
+
+                // Update inputs and grid
+                try { document.getElementById('inputRows').value = rows; } catch(e){}
+                try { document.getElementById('inputCols').value = cols; } catch(e){}
+                selectedPos = null;
+                makeGrid();
+                refreshCells();
+                document.getElementById('output').value = '';
+                showMessage('Level imported. Edit items and press Generate to export.');
+            }
+
+            importBtn.addEventListener('click', function(){ importFileEl.click(); });
+            importFileEl.addEventListener('change', function(){
+                var f = importFileEl.files && importFileEl.files[0];
+                if(!f) return;
+                var reader = new FileReader();
+                reader.onload = function(evt){
+                    try { importLevelFromHtmlText(String(evt.target.result || '')); } catch(err){ showMessage('Import failed: ' + err.message); }
+                };
+                reader.onerror = function(){ showMessage('Failed to read file'); };
+                reader.readAsText(f, 'utf-8');
+                importFileEl.value = '';
+            });
+        })();
+
+        // Export monsters CSV
+        (function(){
+            var btn = document.getElementById('btnExportMonsters');
+            if(!btn) return;
+            function csvEscapeField(s){ if (s==null) s=''; s = String(s); if (s.indexOf('"')!==-1 || s.indexOf(',')!==-1 || s.indexOf('\n')!==-1) return '"' + s.replace(/"/g,'""') + '"'; return s; }
+            btn.addEventListener('click', function(){
+                try {
+                    var rowsArr = [];
+                    rowsArr.push(['name','hp','atk','def','descriptions']);
+                    for (var i=0;i<monsterLibrary.length;i++){
+                        var m = monsterLibrary[i] || {};
+                        var desc = (m.descriptions && m.descriptions.length) ? m.descriptions.join(' | ') : '';
+                        rowsArr.push([m.name||'', String(m.hp||''), String(m.atk||''), String(m.def||''), desc]);
+                    }
+                    var csv = rowsArr.map(function(r){ return r.map(csvEscapeField).join(','); }).join('\r\n');
+                    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+                    var link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'monsters.csv';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (e) { try{ alert('Export failed: '+e.message); }catch(_){ console.error(e); } }
+            });
+        })();
+
+        // Import monsters from CSV (append-only)
+        (function(){
+            var importInput = document.getElementById('importMonstersFile');
+            var importBtn = document.getElementById('btnImportMonsters');
+            if(!importInput || !importBtn) return;
+
+            function parseCsv(text){
+                // Simple CSV parser: split lines, handle quoted fields
+                var rows = [];
+                var lines = text.split(/\r?\n/);
+                for(var i=0;i<lines.length;i++){
+                    var line = lines[i].trim();
+                    if(!line) continue;
+                    var cols = [];
+                    var cur = '';
+                    var inQuotes = false;
+                    for(var j=0;j<line.length;j++){
+                        var ch = line[j];
+                        if(inQuotes){
+                            if(ch==='"'){
+                                if(line[j+1]==='"'){ cur += '"'; j++; } else { inQuotes=false; }
+                            } else { cur += ch; }
+                        } else {
+                            if(ch==='"'){ inQuotes=true; }
+                            else if(ch===','){ cols.push(cur); cur=''; }
+                            else { cur += ch; }
+                        }
+                    }
+                    cols.push(cur);
+                    rows.push(cols);
+                }
+                return rows;
+            }
+
+            importBtn.addEventListener('click', function(){ importInput.click(); });
+            importInput.addEventListener('change', function(){
+                var f = importInput.files && importInput.files[0];
+                if(!f) return;
+                var reader = new FileReader();
+                reader.onload = function(evt){
+                    try {
+                        var txt = String(evt.target.result || '');
+                        var data = parseCsv(txt);
+                        if(!data || data.length===0){ alert('No data found in CSV'); return; }
+                        // First row assumed header; find columns indices
+                        var header = data[0].map(function(h){ return String(h||'').toLowerCase().trim(); });
+                        var idxName = header.indexOf('name');
+                        var idxHp = header.indexOf('hp');
+                        var idxAtk = header.indexOf('atk');
+                        var idxDef = header.indexOf('def');
+                        var idxDesc = header.indexOf('descriptions');
+                        if(idxName===-1){ alert('CSV missing "name" column'); return; }
+                        var added = 0;
+                        for(var r=1;r<data.length;r++){
+                            var row = data[r]; if(!row || row.length===0) continue;
+                            var name = row[idxName] || '';
+                            if(!name || !name.trim()) continue;
+                            var hp = idxHp===-1 ? 6 : Number(row[idxHp]) || 6;
+                            var atk = idxAtk===-1 ? 2 : Number(row[idxAtk]) || 2;
+                            var def = idxDef===-1 ? 0 : Number(row[idxDef]) || 0;
+                            var desc = '';
+                            if(idxDesc!==-1) desc = row[idxDesc] || '';
+                            var descriptions = desc ? String(desc).split(/\s*\|\s*/) : [];
+                            monsterLibrary.push({ name: String(name), hp: hp, atk: atk, def: def, descriptions: descriptions });
+                            added++;
+                        }
+                        if(added>0){ saveMonsterLibrary(); renderMonsterLibrary(); alert('Imported '+added+' monsters.'); }
+                        else alert('No valid monsters found to import.');
+                    } catch(e){ alert('Import failed: '+e.message); }
+                };
+                reader.onerror = function(){ alert('Failed to read file'); };
+                reader.readAsText(f, 'utf-8');
+                importInput.value = '';
+            });
+        })();
+    </script>
+</body>
+</html>
