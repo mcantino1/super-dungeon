@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Welcome to Super Dungeon - Custom Level</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>Welcome to Super Dungeon</h1>
+    <p>
+      Focus the game area, then use <kbd>Arrow Keys</kbd> to move.
+    </p>
+  </div>
+  <button id="darkModeBtn" aria-pressed="false">Dark mode: Off</button>
+</header>
+<main id="game" tabindex="0" role="application" aria-label="Grid adventure game. Use arrow keys to move.">
+  <section class="leftPane" aria-label="Grid panel">
+    <strong>Game Grid</strong>
+    <div class="mapShell" aria-hidden="true">
+      <div id="map"></div>
+    </div>
+  </section>
+  <section class="rightPane" aria-label="Text and stats panel">
+    <div class="panel locationPanel" aria-label="Current location">
+      <div class="row">
+        <strong>Current location</strong>
+        <span id="posText" class="pill">A1</span>
+      </div>
+      <p id="currentText">Use arrow keys to explore.</p>
+      <button id="toggleLogBtn" aria-expanded="false" aria-controls="logArea" style="margin-top:10px;">View exploration log</button>
+      <div id="logArea" hidden>
+        <strong>Discovered locations:</strong>
+        <div id="logList"></div>
+      </div>
+    </div>
+    <div class="panel" aria-label="Character stats and actions">
+      <strong>Character stats</strong>
+      <ul class="statsList" aria-label="Stats list">
+        <li>Life: <strong id="lifeText">10</strong></li>
+        <li>Strength: <strong id="strText">2</strong></li>
+        <li>Defense: <strong id="defText">0</strong></li>
+        <li>Gold: <strong id="goldText">0</strong></li>
+        <li>Key: <strong id="keyText">No</strong></li>
+      </ul>
+      <div class="row" style="margin-top:12px; justify-content:flex-start;">
+        <button id="restartBtn">Restart level</button>
+        <button id="guideBtn">Gameplay guide</button>
+        <button id="continueBtn" hidden>Continue</button>
+      </div>
+    </div>
+    <div id="live" aria-live="polite" class="sr-only"></div>
+  </section>
+</main>
+<dialog id="guideDialog" aria-labelledby="guideTitle">
+  <h2 id="guideTitle" style="margin-top:0;">Gameplay Guide</h2>
+  <p><strong>Goal:</strong> Find the key, then unlock the door to finish the level.</p>
+  <ul>
+    <li><strong>Move:</strong> Use the Arrow Keys to move between grid cells.</li>
+    <li><strong>Fog of war:</strong> You only learn what's in a cell after you visit it.</li>
+    <li><strong>Walls:</strong> You cannot move into a wall. If you bump a wall, it becomes visible.</li>
+    <li><strong>Auto actions:</strong> Keys, treasure, and potions trigger automatically when you step onto them.</li>
+    <li><strong>Door:</strong> You can only unlock the door if you have the key (step onto the door to unlock).</li>
+  </ul>
+  <div class="dialogActions">
+    <button id="closeGuideBtn">Close guide</button>
+  </div>
+</dialog>
+<script src="script.js"></script>
+<script>
+// Inlined campaign levels/towns. Keys: level1..level10, town1..town3
+LEVELS['level1'] = {"id":"level1","rows":2,"cols":2,"items":[{"type":"wall","pos":"B1"},{"type":"door","pos":"B2"},{"type":"key","pos":"A2"}],"scenes":{"A1":"You wake up in a small room."},"nextLevelId":"level2"};
+
+LEVELS['level2'] = {"id":"level2","rows":2,"cols":6,"items":[{"type":"wall","pos":"A2"},{"type":"wall","pos":"B2"},{"type":"wall","pos":"D1"},{"type":"door","pos":"F2"},{"type":"key","pos":"F1"}],"scenes":{"A1":"You walk down the hall."},"nextLevelId":"level3"};
+
+LEVELS['level3'] = {"id":"level3","rows":4,"cols":4,"items":[{"type":"wall","pos":"B1"},{"type":"wall","pos":"B2"},{"type":"wall","pos":"D1"},{"type":"key","pos":"D2"},{"type":"potion","pos":"C3"},{"type":"door","pos":"D4"},{"type":"treasure","pos":"B4","meta":{"kind":"power","value":2}},{"type":"monster","pos":"A4","meta":{"name":"Slime","hp":6,"atk":1,"def":0,"descriptions":["Squiggle, squiggle","Slurp, slurp","Oooooooze"]}}],"scenes":{"A1":"The door opens with a creak, but something feels off in this small room."},"nextLevelId":"level4"};
+
+LEVELS['level4'] = {"id":"level4","rows":6,"cols":6,"items":[{"type":"wall","pos":"A2"},{"type":"wall","pos":"B2"},{"type":"wall","pos":"C2"},{"type":"wall","pos":"D2"},{"type":"wall","pos":"E2"},{"type":"wall","pos":"F4"},{"type":"wall","pos":"E4"},{"type":"wall","pos":"D4"},{"type":"wall","pos":"B4"},{"type":"wall","pos":"C4"},{"type":"wall","pos":"F6"},{"type":"door","pos":"F5"},{"type":"void","pos":"D6"},{"type":"key","pos":"C6"},{"type":"potion","pos":"B3"},{"type":"potion","pos":"F1"},{"type":"treasure","pos":"E3","meta":{"kind":"gold","value":25}},{"type":"monster","pos":"C3","meta":{"name":"Davey","hp":3,"atk":3,"def":1,"descriptions":["Whoa! Watch where you're going!","Ouch, dude! What's your deal?!","I'm leaving"]}},{"type":"monster","pos":"E1","meta":{"name":"Goblin","hp":6,"atk":2,"def":0,"descriptions":["The goblin sneers and draws his blade.","The goblin growls and leaps toward you.","The goblin winces."]}}],"scenes":{"A1":"You can't help but feel that more danger lies ahead. Be brave, adventurer!","B5":"You hope the exit is near, but it's hard to tell in the dim dungeon light."},"nextLevelId":"town1"};
+
+LEVELS['town1'] = {"id":"town1","rows":3,"cols":10,"items":[{"type":"custom_wall","pos":"B2","meta":{"name":"bush"}},{"type":"exit","pos":"J3"},{"type":"custom_wall","pos":"D2","meta":{"name":"bush"}},{"type":"custom_wall","pos":"H2","meta":{"name":"bush"}},{"type":"custom_wall","pos":"J2","meta":{"name":"bush"}},{"type":"custom_wall","pos":"C2","meta":{"name":"flowers"}},{"type":"custom_wall","pos":"I2","meta":{"name":"flowers"}},{"type":"custom_wall","pos":"F1","meta":{"name":"flowers"}},{"type":"armor_shop","pos":"G1"},{"type":"weapon_shop","pos":"E1"},{"type":"inn","pos":"F3"},{"type":"villager","pos":"J1","meta":{"text":"Take this to help you in the dungeon.","kind":"power","value":1}},{"type":"villager","pos":"G3","meta":{"text":"Your work in the dungeon is dangerous but important. Take this as a thank you for your work.","kind":"gold","value":10}}],"scenes":{"A1":"You step out of the dungeon into a quiet town.","C1":"It's a lovely day, and you're glad to get a break from the dark dungeon."},"nextLevelId":"level5"};
+
+LEVELS['level5'] = {"id":"level5","rows":6,"cols":6,"items":[{"type":"wall","pos":"C1"},{"type":"wall","pos":"C2"},{"type":"wall","pos":"A2"},{"type":"wall","pos":"A3"},{"type":"wall","pos":"B4"},{"type":"wall","pos":"C4"},{"type":"wall","pos":"D4"},{"type":"wall","pos":"E3"},{"type":"wall","pos":"E2"},{"type":"wall","pos":"F5"},{"type":"door","pos":"A4"},{"type":"key","pos":"A6"},{"type":"treasure","pos":"D6","meta":{"kind":"gold","value":25}},{"type":"potion","pos":"F6"},{"type":"monster","pos":"B3","meta":{"name":"Blob","hp":7,"atk":1,"def":0,"descriptions":["Squelch","The blob shifts moistily","Look out now!"]}},{"type":"monster","pos":"E1","meta":{"name":"Wolf","hp":9,"atk":3,"def":0,"descriptions":["The wold bares its teeth.","The wolf lunges forward.","The wolf issues a low growl."]}},{"type":"monster","pos":"C5","meta":{"name":"Cave bat","hp":7,"atk":3,"def":1,"descriptions":["The bat screeches","The bat dives toward you","Flap flap flap"]}}],"scenes":{"A1":"You worry about how long this may go on.","E4":"Your bones ache. If only you could find a potion."},"nextLevelId":"level6"};
+
+LEVELS['level6'] = {"id":"level6","rows":6,"cols":6,"items":[{"type":"wall","pos":"B1"},{"type":"wall","pos":"C2"},{"type":"wall","pos":"D4"},{"type":"wall","pos":"E3"},{"type":"wall","pos":"E2"},{"type":"wall","pos":"A3"},{"type":"wall","pos":"F5"},{"type":"wall","pos":"F6"},{"type":"wall","pos":"E6"},{"type":"void","pos":"C1"},{"type":"door","pos":"F1"},{"type":"potion","pos":"D2"},{"type":"potion","pos":"A5"},{"type":"key","pos":"A6"},{"type":"wall","pos":"B5"},{"type":"treasure","pos":"C5","meta":{"kind":"gold","value":25}},{"type":"treasure","pos":"F3","meta":{"kind":"gold","value":25}},{"type":"monster","pos":"A4","meta":{"name":"Steve","hp":8,"atk":4,"def":0,"descriptions":["Hey! What's up?","What are you doing?!","Oh, man!"]}},{"type":"monster","pos":"D3","meta":{"name":"Mummy","hp":8,"atk":4,"def":1,"descriptions":["Mmmmuuuuuuummmmmmmyyyyyy","Grrrrrrr rrr rrrrrrr","Muuuuu uuuuuuuu uuuuuuummmmy"]}},{"type":"monster","pos":"F4","meta":{"name":"Zombie","hp":8,"atk":4,"def":2,"descriptions":["Zombieeeeeee","The zombie shuffles toward you","The zombie opens its mouth, but you don't want to look inside."]}}],"scenes":{"A1":"You steel yourself for what may come."},"nextLevelId":"town2"};
+
+LEVELS['town2'] = {"id":"town2","rows":7,"cols":5,"items":[{"type":"custom_wall","pos":"B2","meta":{"name":"Flowers"}},{"type":"custom_wall","pos":"B5","meta":{"name":"Flowers"}},{"type":"custom_wall","pos":"D5","meta":{"name":"Flowers"}},{"type":"custom_wall","pos":"D2","meta":{"name":"Flowers"}},{"type":"exit","pos":"E1"},{"type":"custom_wall","pos":"B7","meta":{"name":"Flowers"}},{"type":"custom_wall","pos":"D7","meta":{"name":"Flowers"}},{"type":"custom_wall","pos":"A7","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"C7","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"E7","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"B3","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"B4","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"D3","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"D4","meta":{"name":"Bushes"}},{"type":"inn","pos":"C5"},{"type":"weapon_shop","pos":"A6"},{"type":"armor_shop","pos":"E6"},{"type":"villager","pos":"E4","meta":{"text":"Be careful in the dungeons! Take this to help you prepare.","kind":"gold","value":20}}],"scenes":{"A1":"A quiet town offers a welcome respite.","C3":"What a lovely garden."},"nextLevelId":"level7"};
+
+LEVELS['level7'] = {"id":"level7","rows":6,"cols":6,"items":[{"type":"wall","pos":"D1"},{"type":"treasure","pos":"E1","meta":{"kind":"gold","value":25}},{"type":"door","pos":"F3"},{"type":"wall","pos":"B3"},{"type":"wall","pos":"B4"},{"type":"wall","pos":"C4"},{"type":"wall","pos":"E3"},{"type":"wall","pos":"E4"},{"type":"wall","pos":"C6"},{"type":"key","pos":"A6"},{"type":"potion","pos":"B5"},{"type":"void","pos":"E6"},{"type":"monster","pos":"A5","meta":{"name":"Skeleton","hp":11,"atk":7,"def":2,"descriptions":["The skeleton's bones rattle as it raises a bone blade.","The bones are their money. So are the worms.","The pull your hair up, but not out, to get another chance at life."]}},{"type":"monster","pos":"F2","meta":{"name":"Skeleton","hp":11,"atk":7,"def":2,"descriptions":["The skeleton's bones rattle as it raises a bone blade.","The bones are their money. So are the worms.","The pull your hair up, but not out, to get another chance at life."]}},{"type":"monster","pos":"C3","meta":{"name":"Ogre","hp":12,"atk":8,"def":2,"descriptions":["A giant ogre appears from the shadows.","The ogre towers over you as it raises a massive club.","The ogre grumbles and charges forward."]}}],"scenes":{"A1":"You confidence soars, and you hope it is not misplaced."},"nextLevelId":"level8"};
+
+LEVELS['level8'] = {"id":"level8","rows":7,"cols":7,"items":[{"type":"wall","pos":"C2"},{"type":"wall","pos":"B3"},{"type":"wall","pos":"B5"},{"type":"wall","pos":"C6"},{"type":"wall","pos":"E6"},{"type":"wall","pos":"F5"},{"type":"wall","pos":"F3"},{"type":"wall","pos":"E2"},{"type":"treasure","pos":"D2","meta":{"kind":"gold","value":25}},{"type":"door","pos":"D4"},{"type":"treasure","pos":"D6","meta":{"kind":"gold","value":25}},{"type":"treasure","pos":"B4","meta":{"kind":"power","value":2}},{"type":"treasure","pos":"F4","meta":{"kind":"power","value":2}},{"type":"potion","pos":"G4"},{"type":"potion","pos":"D7"},{"type":"void","pos":"A5"},{"type":"key","pos":"F2"},{"type":"monster","pos":"C4","meta":{"name":"Ghoul","hp":12,"atk":8,"def":2,"descriptions":["Oooooo ooooo oooooooo ooooo ooooooooo.","The ghoul swoops spookily.","The ghoul disappears then reappears behind you."]}},{"type":"monster","pos":"E4","meta":{"name":"Ghoul","hp":12,"atk":8,"def":2,"descriptions":["Oooooo ooooo oooooooo ooooo ooooooooo.","The ghoul swoops spookily.","The ghoul disappears then reappears behind you."]}},{"type":"monster","pos":"D3","meta":{"name":"Werewolf","hp":12,"atk":7,"def":2,"descriptions":["You see a large wolf standing upright in tattered clothes.","The wolf dribbles its basketball toward you.","This wolf seemed nicer in the movies."]}},{"type":"monster","pos":"D5","meta":{"name":"Werewolf","hp":12,"atk":7,"def":2,"descriptions":["You see a large wolf standing upright in tattered clothes.","The wolf dribbles its basketball toward you.","This wolf seemed nicer in the movies."]}}],"scenes":{"A1":"You can sense the end is near, if you can just make it a bit further."},"nextLevelId":"town3"};
+
+LEVELS['town3'] = {"id":"town3","rows":9,"cols":7,"items":[{"type":"custom_wall","pos":"B2","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"B3","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"F2","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"F3","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"F7","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"F8","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"B8","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"B7","meta":{"name":"Bushes"}},{"type":"custom_wall","pos":"C2","meta":{"name":"Flowers"}},{"type":"custom_wall","pos":"B4","meta":{"name":"Flowers"}},{"type":"custom_wall","pos":"E2","meta":{"name":"Flowers"}},{"type":"custom_wall","pos":"F4","meta":{"name":"Flowers"}},{"type":"custom_wall","pos":"F6","meta":{"name":"Flowers"}},{"type":"exit","pos":"A9"},{"type":"custom_wall","pos":"E8","meta":{"name":"Flowers"}},{"type":"custom_wall","pos":"C8","meta":{"name":"Flowers"}},{"type":"custom_wall","pos":"B6","meta":{"name":"Flowers"}},{"type":"armor_shop","pos":"C5"},{"type":"inn","pos":"D4"},{"type":"weapon_shop","pos":"E5"},{"type":"custom_wall","pos":"D5","meta":{"name":"Fountain"}},{"type":"villager","pos":"D7","meta":{"text":"Be strong, adventurer! Take this.","kind":"gold","value":15}},{"type":"villager","pos":"G9","meta":{"text":"Your curiosity can lead to danger in the dungeon. Stay safe, warrior!","kind":"defense","value":2}}],"scenes":{"A1":"Finally a new town. I can rest here a bit.","A5":"The beauty of the quiet town helps calm your nerves, but makes you dread the dungeon even more. ","G1":"Few people are around, but you see a villager in the distance."},"nextLevelId":"level9"};
+
+LEVELS['level9'] = {"id":"level9","rows":8,"cols":8,"items":[{"type":"wall","pos":"A2"},{"type":"wall","pos":"B2"},{"type":"wall","pos":"C3"},{"type":"wall","pos":"D2"},{"type":"wall","pos":"E2"},{"type":"wall","pos":"F2"},{"type":"wall","pos":"G2"},{"type":"wall","pos":"H4"},{"type":"wall","pos":"F4"},{"type":"wall","pos":"G5"},{"type":"wall","pos":"E4"},{"type":"wall","pos":"D5"},{"type":"wall","pos":"C5"},{"type":"wall","pos":"B5"},{"type":"wall","pos":"A7"},{"type":"wall","pos":"B7"},{"type":"wall","pos":"C7"},{"type":"wall","pos":"D7"},{"type":"wall","pos":"E7"},{"type":"wall","pos":"F7"},{"type":"wall","pos":"G7"},{"type":"potion","pos":"H8"},{"type":"potion","pos":"A3"},{"type":"treasure","pos":"C2","meta":{"kind":"defense","value":1}},{"type":"treasure","pos":"E5","meta":{"kind":"power","value":1}},{"type":"key","pos":"G4"},{"type":"void","pos":"H5"},{"type":"door","pos":"A8"},{"type":"monster","pos":"E1","meta":{"name":"Giant spider","hp":25,"atk":13,"def":6,"descriptions":["Numerous soft foot steps creep toward you.","The spiders fangs are much longer than you thought they might be.","The spider shoots a web toward you."]}},{"type":"monster","pos":"F5","meta":{"name":"Giant spider","hp":25,"atk":13,"def":6,"descriptions":["Numerous soft foot steps creep toward you.","The spiders fangs are much longer than you thought they might be.","The spider shoots a web toward you."]}},{"type":"monster","pos":"C4","meta":{"name":"Ghoul","hp":12,"atk":13,"def":2,"descriptions":["Oooooo ooooo oooooooo ooooo ooooooooo.","The ghoul swoops spookily.","The ghoul disappears then reappears behind you."]}},{"type":"monster","pos":"E8","meta":{"name":"Sorceress","hp":30,"atk":14,"def":6,"descriptions":["A bright ball of energy hovers in front of the sorceress.","The sorcerer shoots the ball toward you.","The sorceress floats above the ground with an eerie glow."]}}],"scenes":{"A1":"Your armor is damaged and your body is bruised, but you just need to keep moving."},"nextLevelId":"level10"};
+
+LEVELS['level10'] = {"id":"level10","rows":10,"cols":10,"items":[{"type":"wall","pos":"C2"},{"type":"wall","pos":"C3"},{"type":"wall","pos":"B3"},{"type":"wall","pos":"C4"},{"type":"wall","pos":"D3"},{"type":"wall","pos":"E2"},{"type":"wall","pos":"G1"},{"type":"potion","pos":"J2"},{"type":"potion","pos":"E3"},{"type":"wall","pos":"I2"},{"type":"wall","pos":"J3"},{"type":"wall","pos":"G3"},{"type":"wall","pos":"F4"},{"type":"wall","pos":"G4"},{"type":"wall","pos":"G5"},{"type":"wall","pos":"H4"},{"type":"wall","pos":"J5"},{"type":"wall","pos":"A6"},{"type":"wall","pos":"D6"},{"type":"wall","pos":"D7"},{"type":"wall","pos":"C7"},{"type":"wall","pos":"D8"},{"type":"wall","pos":"E7"},{"type":"wall","pos":"G8"},{"type":"wall","pos":"H7"},{"type":"wall","pos":"H8"},{"type":"wall","pos":"I8"},{"type":"wall","pos":"H9"},{"type":"wall","pos":"E10"},{"type":"wall","pos":"F10"},{"type":"wall","pos":"B9"},{"type":"void","pos":"C9"},{"type":"treasure","pos":"D10","meta":{"kind":"defense","value":2}},{"type":"potion","pos":"A8"},{"type":"potion","pos":"F7"},{"type":"potion","pos":"I4"},{"type":"key","pos":"J4"},{"type":"treasure","pos":"D2","meta":{"kind":"power","value":2}},{"type":"door","pos":"I9"},{"type":"monster","pos":"A4","meta":{"name":"Sorceress","hp":30,"atk":14,"def":6,"descriptions":["A bright ball of energy hovers in front of the sorceress.","The sorcerer shoots the ball toward you.","The sorceress floats above the ground with an eerie glow."]}},{"type":"monster","pos":"A10","meta":{"name":"Sorceress","hp":30,"atk":14,"def":6,"descriptions":["A bright ball of energy hovers in front of the sorceress.","The sorcerer shoots the ball toward you.","The sorceress floats above the ground with an eerie glow."]}},{"type":"monster","pos":"D5","meta":{"name":"Vampire Lord","hp":30,"atk":16,"def":7,"descriptions":["I vaunt to suck your blood!","1! 2! 3! strikes from the Vampire Lord.","The Vampire Lord hovers ominously."]}},{"type":"monster","pos":"F8","meta":{"name":"Vampire Lord","hp":30,"atk":16,"def":7,"descriptions":["I vaunt to suck your blood!","1! 2! 3! strikes from the Vampire Lord.","The Vampire Lord hovers ominously."]}},{"type":"monster","pos":"J8","meta":{"name":"Vampire Lord","hp":30,"atk":16,"def":7,"descriptions":["I vaunt to suck your blood!","1! 2! 3! strikes from the Vampire Lord.","The Vampire Lord hovers ominously."]}}],"scenes":{"A1":"You finally made it to the end. If you could just reach the exit.","F5":"This labyrinth can be infuriating, but you\u2019ve come too far to give up now."},"nextLevelId":null};
+
+// Start campaign at first stage (signal startup announcements)
+try {
+  window.__campaignStartup = true;
+  loadLevel('level1');
+} catch (e) {
+  console.error('Failed to start campaign level:', e);
+  document.getElementById('currentText').textContent = 'Failed to start campaign.';
+}
+</script>
+</body>
+</html>
