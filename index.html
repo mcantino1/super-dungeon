@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Welcome to Super Dungeon</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<header>
+  <div>
+    <h1>Welcome to Super Dungeon</h1>
+    <p>
+      Focus the game area, then use <kbd>Arrow Keys</kbd> to move.
+    </p>
+  </div>
+  <button id="darkModeBtn" aria-pressed="false">Dark mode: Off</button>
+</header>
+
+<main id="game" tabindex="0" role="application"
+      aria-label="Grid adventure game. Use arrow keys to move.">
+
+  <section class="leftPane" aria-label="Grid panel">
+    <strong>Game Grid</strong>
+    <div class="mapShell" aria-hidden="true">
+      <div id="map"></div>
+    </div>
+  </section>
+
+  <section class="rightPane" aria-label="Text and stats panel">
+    <div class="panel locationPanel" aria-label="Current location">
+      <div class="row">
+        <strong>Current location</strong>
+        <span id="posText" class="pill">A1</span>
+      </div>
+
+      <p id="currentText">Use arrow keys to explore.</p>
+
+      <button id="toggleLogBtn" aria-expanded="false" aria-controls="logArea" style="margin-top:10px;">
+        View exploration log
+      </button>
+
+      <div id="logArea" hidden>
+        <strong>Discovered locations:</strong>
+        <div id="logList"></div>
+      </div>
+    </div>
+
+    <div class="panel" aria-label="Character stats and actions">
+      <strong>Character stats</strong>
+
+      <ul class="statsList" aria-label="Stats list">
+        <li>Life: <strong id="lifeText">10</strong></li>
+        <li>Strength: <strong id="strText">2</strong></li>
+        <li>Defense: <strong id="defText">0</strong></li>
+        <li>Gold: <strong id="goldText">0</strong></li>
+        <li>Key: <strong id="keyText">No</strong></li>
+      </ul>
+
+      <div class="row" style="margin-top:12px; justify-content:flex-start;">
+        <button id="restartBtn">Restart level</button>
+        <button id="guideBtn">Gameplay guide</button>
+        <button id="continueBtn" hidden>Continue</button>
+      </div>
+    </div>
+
+    <div id="live" aria-live="polite" class="sr-only"></div>
+  </section>
+</main>
+
+<dialog id="guideDialog" aria-labelledby="guideTitle">
+  <h2 id="guideTitle" style="margin-top:0;">Gameplay Guide</h2>
+  <p><strong>Goal:</strong> Find the key, then unlock the door to finish the level.</p>
+  <ul>
+    <li><strong>Move:</strong> Use the Arrow Keys to move between grid cells.</li>
+    <li><strong>Fog of war:</strong> You only learn what's in a cell after you visit it.</li>
+    <li><strong>Walls:</strong> You cannot move into a wall. If you bump a wall, it becomes visible.</li>
+    <li><strong>Auto actions:</strong> Keys, treasure, and potions trigger automatically when you step onto them.</li>
+    <li><strong>Door:</strong> You can only unlock the door if you have the key (step onto the door to unlock).</li>
+  </ul>
+  <div class="dialogActions">
+    <button id="closeGuideBtn">Close guide</button>
+  </div>
+</dialog>
+
+<script src="script.js"></script>
+</body>
+</html>
