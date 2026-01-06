@@ -1133,6 +1133,11 @@ function tryMove(dr, dc) {
         currentText.textContent = msg;
         appendLog(curPos, msg);
         announce(msg);
+        // Reset life to default and remove any held key, but preserve other stats.
+        stats.life = 10;
+        stats.key = false;
+        // Tell loadLevel to preserve the current stats object when reloading.
+        preserveStatsOnNextLoad = true;
         loadLevel(currentLevelId);
         return;
       }
