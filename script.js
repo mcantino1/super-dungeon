@@ -1100,7 +1100,6 @@ function tryMove(dr, dc) {
     } else {
       if (playerDamage <= 0) {
         msg = `Your attack couldn't penetrate ${monsterName}'s defense. `;
-        if (attackDesc) msg += attackDesc + ' ';
       } else {
         // Player-only critical hit: 8% chance to deal 50% more damage
         isCrit = Math.random() < 0.08;
@@ -1108,7 +1107,6 @@ function tryMove(dr, dc) {
         if (isCrit) appliedDamage = Math.round(playerDamage * 1.5);
         monster.hp -= appliedDamage;
         msg = `You attack ${monsterName} for ${appliedDamage}. `;
-        if (attackDesc) msg += attackDesc + ' ';
       }
     }
 
@@ -1124,7 +1122,7 @@ function tryMove(dr, dc) {
         stats.life -= monsterDamage;
         msg += `${monsterName} attacks you for ${monsterDamage}. `;
       }
-      msg += `Your life: ${Math.max(0, stats.life)}. ${monsterName} life: ${monster.hp}. `;
+      msg += `Your life: ${Math.max(0, stats.life)}. ${monsterName} life: ${Math.max(0, monster.hp)}. `;
 
       // If player dies, reset level.
       if (stats.life <= 0) {
@@ -1142,23 +1140,30 @@ function tryMove(dr, dc) {
         return;
       }
 
-      // After combat, ALSO tell the player what square they are currently in.
-      const posNow = toPos(player.row, player.col);
-      const roomText = describeCurrentLocation();
-      const full = msg + ` You are in ${posNow}. ` + roomText;
-      if (isCrit) {
-        const curPos = toPos(player.row, player.col);
-        currentText.textContent = `Critical hit! ${full}`;
-        appendLog(curPos, `Critical hit! ${full}`);
-        updateUI();
-        announceSequence(["Critical hit!", full]);
-      } else {
-        const curPos = toPos(player.row, player.col);
-        currentText.textContent = full;
-        appendLog(curPos, full);
-        updateUI();
-        announce(full);
-      }
+      // After combat, when the monster survives, report the combat
+      // results and also include surrounding-tile information so the
+      // player can decide whether to move. Do NOT include the full
+      // room description or explicit "You are in ..." text to reduce
+      // clutter; only the surroundings cue is appended.
+      const full = msg; // combat message only
+      const surroundings = groupedSurroundingsText();
+      // Build spoken sequence with the monster description first (if available).
+      const spokenSeq = [];
+      if (attackDesc) spokenSeq.push(attackDesc);
+      if (isCrit) spokenSeq.push("Critical hit!");
+      // Append the combat message and then the surroundings cue (if any).
+      spokenSeq.push(full);
+      if (surroundings) spokenSeq.push(surroundings);
+
+      const curPos = toPos(player.row, player.col);
+      // Ensure the monster description and surroundings also appear in the
+      // Current location text so it is available to screenreader and
+      // deaf-blind users.
+      const displayFull = (attackDesc ? attackDesc + ' ' : '') + full + (surroundings ? ' ' + surroundings : '');
+      currentText.textContent = displayFull;
+      appendLog(curPos, displayFull);
+      updateUI();
+      announceSequence(spokenSeq);
       return;
     }
 
@@ -1166,20 +1171,17 @@ function tryMove(dr, dc) {
     removeMonster(nextPos);
     // Once defeated, the monster icon should disappear from the map.
     revealedSpecial.delete(nextPos);
-    msg += `You defeat ${monsterName}. Your life: ${Math.max(0, stats.life)}. ${monsterName} life: 0. `;
+    // Append concise defeat notice immediately after the attack message.
+    msg += `${monsterName} is defeated. `;
 
-    // Move into the monster's square upon defeating it.
-    player.row = nr;
-    player.col = nc;
-
-    // Announce combat results combined with the room description.
-    if (isCrit) {
-      // Ensure "Critical hit!" is spoken first, and also shown in the UI.
-      announceSequence(["Critical hit!"]);
-      enterCell("Critical hit! " + msg);
-    } else {
-      enterCell(msg);
-    }
+    // Do NOT move the player — they remain in their current square after
+    // defeating the monster. Include the player's current position in the
+    // defeat message so they stay oriented.
+    const posNow = toPos(player.row, player.col);
+    // Compose a prefix that ensures the monster description (if any)
+    // is spoken first, followed by a critical notice when appropriate.
+    const prefix = (attackDesc ? attackDesc + ' ' : '') + (isCrit ? 'Critical hit! ' : '') + msg + ` You are in ${posNow}. `;
+    enterCell(prefix);
     return;
   }
 
